@@ -5,9 +5,14 @@ from models import init_db
 from api import app
 import json
 import logging
+import os
+
+# Get the directory containing this file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
 
 # Load configuration
-with open('config.json', 'r') as f:
+with open(CONFIG_PATH, 'r') as f:
     config = json.load(f)
 
 # Configure logging

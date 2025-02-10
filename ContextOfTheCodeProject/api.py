@@ -4,9 +4,14 @@ from models import get_db_session, SystemMetrics, StockMetrics
 from system_monitor import SystemMonitor
 from stock_monitor import StockMonitor
 import json
+import os
+
+# Get the directory containing this file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
 
 # Load configuration
-with open('config.json', 'r') as f:
+with open(CONFIG_PATH, 'r') as f:
     config = json.load(f)
 
 app = Flask(__name__)
