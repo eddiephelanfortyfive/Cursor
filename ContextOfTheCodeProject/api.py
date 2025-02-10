@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from datetime import datetime, timedelta
 from models import get_db_session, SystemMetrics, StockMetrics
 from system_monitor import SystemMonitor
@@ -17,6 +17,10 @@ with open(CONFIG_PATH, 'r') as f:
 app = Flask(__name__)
 system_monitor = SystemMonitor()
 stock_monitor = StockMonitor()
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/metrics/system/current')
 def get_current_system_metrics():

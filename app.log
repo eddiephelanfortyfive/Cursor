@@ -8,3 +8,75 @@
  * Running on http://127.0.0.1:5000
  * Running on http://10.101.32.126:5000
 2025-02-10 19:58:57,481 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-02-10 19:59:57,483 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 19:59:57 GMT)" (scheduled at 2025-02-10 19:59:57.476954+00:00)
+2025-02-10 19:59:58,500 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 19:59:58,500 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:00:57 GMT)" executed successfully
+2025-02-10 20:00:57,482 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:01:57 GMT)" (scheduled at 2025-02-10 20:00:57.476954+00:00)
+2025-02-10 20:00:58,495 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:00:58,495 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:01:57 GMT)" executed successfully
+2025-02-10 20:01:57,482 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:02:57 GMT)" (scheduled at 2025-02-10 20:01:57.476954+00:00)
+2025-02-10 20:01:58,492 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:01:58,492 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:02:57 GMT)" executed successfully
+2025-02-10 20:02:57,482 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:03:57 GMT)" (scheduled at 2025-02-10 20:02:57.476954+00:00)
+2025-02-10 20:02:58,494 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:02:58,494 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:03:57 GMT)" executed successfully
+2025-02-10 20:03:57,481 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:04:57 GMT)" (scheduled at 2025-02-10 20:03:57.476954+00:00)
+2025-02-10 20:03:57,481 - apscheduler.executors.default - INFO - Running job "StockMonitor.collect_metrics (trigger: interval[0:05:00], next run at: 2025-02-10 20:08:57 GMT)" (scheduled at 2025-02-10 20:03:57.477077+00:00)
+2025-02-10 20:03:58,090 - stock_monitor - ERROR - Error collecting stock metrics for EUR/USD: 'v'
+2025-02-10 20:03:58,183 - stock_monitor - ERROR - Error collecting stock metrics for INDEXSP: 'v'
+2025-02-10 20:03:58,287 - stock_monitor - ERROR - Error collecting stock metrics for GBP/USD: 'v'
+2025-02-10 20:03:58,288 - apscheduler.executors.default - INFO - Job "StockMonitor.collect_metrics (trigger: interval[0:05:00], next run at: 2025-02-10 20:08:57 GMT)" executed successfully
+2025-02-10 20:03:58,495 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:03:58,496 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:04:57 GMT)" executed successfully
+2025-02-10 20:11:55,454 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:11:55,454 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:11:55,454 - apscheduler.scheduler - INFO - Added job "SystemMonitor.collect_metrics" to job store "default"
+2025-02-10 20:11:55,454 - apscheduler.scheduler - INFO - Added job "StockMonitor.collect_metrics" to job store "default"
+2025-02-10 20:11:55,454 - apscheduler.scheduler - INFO - Scheduler started
+2025-02-10 20:11:55,459 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.101.32.126:5000
+2025-02-10 20:11:55,459 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-02-10 20:12:55,460 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:12:55 GMT)" (scheduled at 2025-02-10 20:12:55.454138+00:00)
+2025-02-10 20:12:56,485 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:12:56,485 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:13:55 GMT)" executed successfully
+2025-02-10 20:13:55,457 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:14:55 GMT)" (scheduled at 2025-02-10 20:13:55.454138+00:00)
+2025-02-10 20:13:56,464 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:13:56,464 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:14:55 GMT)" executed successfully
+2025-02-10 20:14:50,675 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:14:50,675 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:14:50,676 - apscheduler.scheduler - INFO - Added job "SystemMonitor.collect_metrics" to job store "default"
+2025-02-10 20:14:50,676 - apscheduler.scheduler - INFO - Added job "StockMonitor.collect_metrics" to job store "default"
+2025-02-10 20:14:50,676 - apscheduler.scheduler - INFO - Scheduler started
+2025-02-10 20:14:50,681 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.101.32.126:5000
+2025-02-10 20:14:50,681 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-02-10 20:15:57,983 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:15:57,983 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:15:57,984 - apscheduler.scheduler - INFO - Added job "SystemMonitor.collect_metrics" to job store "default"
+2025-02-10 20:15:57,984 - apscheduler.scheduler - INFO - Added job "StockMonitor.collect_metrics" to job store "default"
+2025-02-10 20:15:57,984 - apscheduler.scheduler - INFO - Scheduler started
+2025-02-10 20:15:57,987 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.101.32.126:5000
+2025-02-10 20:15:57,987 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-02-10 20:16:57,990 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:16:57 GMT)" (scheduled at 2025-02-10 20:16:57.983245+00:00)
+2025-02-10 20:16:59,000 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:16:59,000 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:17:57 GMT)" executed successfully
+2025-02-10 20:17:57,988 - apscheduler.executors.default - INFO - Running job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:18:57 GMT)" (scheduled at 2025-02-10 20:17:57.983245+00:00)
+2025-02-10 20:17:58,997 - system_monitor - INFO - System metrics collected successfully
+2025-02-10 20:17:58,997 - apscheduler.executors.default - INFO - Job "SystemMonitor.collect_metrics (trigger: interval[0:01:00], next run at: 2025-02-10 20:18:57 GMT)" executed successfully
+2025-02-10 20:18:23,911 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:18:23,911 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-02-10 20:18:23,911 - apscheduler.scheduler - INFO - Added job "SystemMonitor.collect_metrics" to job store "default"
+2025-02-10 20:18:23,911 - apscheduler.scheduler - INFO - Added job "StockMonitor.collect_metrics" to job store "default"
+2025-02-10 20:18:23,911 - apscheduler.scheduler - INFO - Scheduler started
+2025-02-10 20:18:23,915 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.101.32.126:5000
+2025-02-10 20:18:23,915 - werkzeug - INFO - [33mPress CTRL+C to quit[0m

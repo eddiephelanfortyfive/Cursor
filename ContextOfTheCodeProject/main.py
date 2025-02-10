@@ -25,16 +25,20 @@ logger = logging.getLogger('main')
 
 def main():
     # Initialize database
+    print('Initializing database...')
     init_db()
     
     # Create monitors
+    print('Creating monitors...')
     system_monitor = SystemMonitor()
     stock_monitor = StockMonitor()
     
     # Create scheduler
+    print('Creating scheduler...')
     scheduler = BackgroundScheduler()
     
     # Add jobs
+    print('Adding jobs...')
     scheduler.add_job(
         system_monitor.collect_metrics,
         'interval',
@@ -48,14 +52,16 @@ def main():
     )
     
     # Start scheduler
+    print('Starting scheduler...')
     scheduler.start()
     
     # Start Flask API
+    print('Starting Flask API...')
     app.run(
         host=config['api_server']['host'],
         port=config['api_server']['port'],
         debug=config['api_server']['debug']
     )
-
+    print('Flask API started.')
 if __name__ == '__main__':
     main()
