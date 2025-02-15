@@ -6,6 +6,7 @@ from stock_monitor import StockMonitor
 import json
 import os
 import logging
+import sqlite3
 
 # Get the directory containing this file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,6 +20,14 @@ app = Flask(__name__)
 system_monitor = SystemMonitor()
 stock_monitor = StockMonitor()
 logger = logging.getLogger(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+def get_db_connection():
+    conn = sqlite3.connect('monitoring.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @app.route('/')
 def index():
@@ -94,6 +103,17 @@ def get_stock_metrics_history(symbol, hours):
         } for m in metrics])
     finally:
         session.close()
+
+@app.route('/metrics/stocks/history/<symbol>', methods=['GET'])
+def get_stock_history(symbol):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT timestamp, price FROM stock_metrics WHERE symbol = ? ORDER BY timestamp', (symbol))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    data = [{'timestamp': row['timestamp'], 'price': row['price']} for row in rows]
+    return jsonify(data)
 
 if __name__ == '__main__':
     app.run(

@@ -1,7 +1,7 @@
 {
     "api": {
         "finnhub_key": "cuoe1ghr01qve8pspk10cuoe1ghr01qve8pspk1g",
-        "stocks_to_monitor": ["EUR/USD", "INDEXSP", "GBP/USD"]
+        "stocks_to_monitor": ["AAPL", "GOOG", "TSLA"]
     },
     "database": {
         "connection_string": "sqlite:///monitoring.db",
@@ -19,7 +19,7 @@
         "debug": false
     },
     "logging": {
-        "level": "INFO",
+        "level": "DEBUG",
         "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         "file": "app.log"
     }

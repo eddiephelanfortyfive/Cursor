@@ -32,13 +32,13 @@ class StockMonitor:
         for symbol in self.symbols:
             try:
                 quote = self.client.quote(symbol)
-                logger.debug(f"Quote for {symbol}: {quote}")
+                # Remove or comment out the following line to stop logging the API response
+                # logger.debug(f"API response for {symbol}: {json.dumps(quote, indent=2)}")
                 metrics = StockMetrics(
                     symbol=symbol,
                     price=quote['c'],  # Current price
                     high=quote['h'],   # High price of the day
                     low=quote['l'],    # Low price of the day
-                    volume=quote.get('v', 0)  # Volume (default to 0 for forex)
                 )
 
                 session = get_db_session()

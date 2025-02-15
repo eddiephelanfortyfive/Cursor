@@ -49,10 +49,11 @@ def main():
         seconds=config['monitoring']['system_metrics_interval']
     )
     
+    # Schedule stock metrics collection every minute
     scheduler.add_job(
         stock_monitor.collect_metrics,
         'interval',
-        seconds=config['monitoring']['stock_metrics_interval']
+        seconds=60  # Run every minute
     )
     
     # Start scheduler
@@ -67,5 +68,6 @@ def main():
         debug=config['api_server']['debug']
     )
     print('Flask API started.')
+
 if __name__ == '__main__':
     main()

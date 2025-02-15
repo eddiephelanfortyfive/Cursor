@@ -78,4 +78,57 @@ setInterval(updateStockMetrics, 60000);  // Update every minute
 
 // Initial update
 updateSystemMetrics();
-updateStockMetrics(); 
+updateStockMetrics();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const stockContainer = document.getElementById('stockContainer');
+    const symbols = ['GOOG', 'TSLA', 'AAPL'];
+
+    symbols.forEach(symbol => {
+        const canvas = document.createElement('canvas');
+        canvas.id = `${symbol}Chart`;
+        stockContainer.appendChild(canvas);
+
+        fetch(`/metrics/stocks/history/${symbol}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    console.warn(`No data available for ${symbol}`);
+                    const message = document.createElement('p');
+                    message.textContent = `No data available for ${symbol}`;
+                    stockContainer.appendChild(message);
+                    return;
+                }
+
+                const timestamps = data.map(d => new Date(d.timestamp).toLocaleTimeString());
+                const prices = data.map(d => d.price);
+
+                new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: timestamps,
+                        datasets: [{
+                            label: `${symbol} Stock Price`,
+                            data: prices,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'minute'
+                                }
+                            },
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error(`Error fetching historical data for ${symbol}:`, error));
+    });
+}); 
