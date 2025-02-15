@@ -85,13 +85,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const symbols = ['GOOG', 'TSLA', 'AAPL'];
 
     symbols.forEach(symbol => {
-        const canvas = document.createElement('canvas');
-        canvas.id = `${symbol}Chart`;
-        stockContainer.appendChild(canvas);
+        const canvas = document.getElementById(`${symbol}Chart`);
 
         fetch(`/metrics/stocks/history/${symbol}`)
             .then(response => response.json())
             .then(data => {
+                console.log(`Data received for ${symbol}:`, data);
+
                 if (data.length === 0) {
                     console.warn(`No data available for ${symbol}`);
                     const message = document.createElement('p');

@@ -108,11 +108,15 @@ def get_stock_metrics_history(symbol, hours):
 def get_stock_history(symbol):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT timestamp, price FROM stock_metrics WHERE symbol = ? ORDER BY timestamp', (symbol))
+    cursor.execute('SELECT timestamp, price FROM stock_metrics WHERE symbol = ? ORDER BY timestamp', (symbol,))
     rows = cursor.fetchall()
     conn.close()
     
     data = [{'timestamp': row['timestamp'], 'price': row['price']} for row in rows]
+    
+    # Log the data being returned
+    logger.debug(f"Data for {symbol}: {data}")
+    
     return jsonify(data)
 
 if __name__ == '__main__':
