@@ -5,3 +5,5 @@
 /TA Sessions
 /system_metrics.csv
 .venv
+app.log
+monitoring.db

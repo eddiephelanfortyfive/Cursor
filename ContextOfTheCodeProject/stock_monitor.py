@@ -28,10 +28,11 @@ class StockMonitor:
         self.symbols = config['api']['stocks_to_monitor']
 
     def collect_metrics(self):
-        """Collect metrics for all configured stocks"""
+        """Collect current stock prices for all configured stocks"""
         for symbol in self.symbols:
             try:
                 quote = self.client.quote(symbol)
+                logger.debug(f"Quote for {symbol}: {quote}")
                 metrics = StockMetrics(
                     symbol=symbol,
                     price=quote['c'],  # Current price
@@ -65,3 +66,11 @@ class StockMonitor:
         except Exception as e:
             logger.error(f"Error getting current stock metrics: {str(e)}")
             return None
+
+    def test_finnhub_connection(self):
+        """Test the connection to Finnhub API"""
+        try:
+            quote = self.client.quote('AAPL')  # Test with a known stock symbol
+            print("Finnhub connection successful:", quote)
+        except Exception as e:
+            print("Finnhub connection failed:", str(e))

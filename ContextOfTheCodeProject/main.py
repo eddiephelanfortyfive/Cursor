@@ -33,6 +33,10 @@ def main():
     system_monitor = SystemMonitor()
     stock_monitor = StockMonitor()
     
+    # Test Finnhub connection
+    print('Testing Finnhub connection...')
+    stock_monitor.test_finnhub_connection()
+
     # Create scheduler
     print('Creating scheduler...')
     scheduler = BackgroundScheduler()

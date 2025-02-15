@@ -53,7 +53,19 @@ def get_system_metrics_history(hours):
 @app.route('/metrics/stocks/current')
 def get_current_stock_metrics():
     """Get current stock metrics"""
-    return jsonify(stock_monitor.get_current_metrics())
+    current_metrics = {}
+    for symbol in stock_monitor.symbols:
+        try:
+            quote = stock_monitor.client.quote(symbol)
+            current_metrics[symbol] = {
+                'price': quote['c'],
+                'high': quote['h'],
+                'low': quote['l'],
+                'volume': quote.get('v', 0)
+            }
+        except Exception as e:
+            logger.error(f"Error getting current stock metrics for {symbol}: {str(e)}")
+    return jsonify(current_metrics)
 
 @app.route('/metrics/stocks/current/<symbol>')
 def get_current_stock_metrics_by_symbol(symbol):

@@ -1,6 +1,6 @@
 {
     "api": {
-        "finnhub_key": "cul4ut1r01qqav2v1migcul4ut1r01qqav2v1mj0",
+        "finnhub_key": "cuoe1ghr01qve8pspk10cuoe1ghr01qve8pspk1g",
         "stocks_to_monitor": ["EUR/USD", "INDEXSP", "GBP/USD"]
     },
     "database": {

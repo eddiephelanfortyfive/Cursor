@@ -13,20 +13,15 @@ async function updateSystemMetrics() {
 
 // Fetch and update stock metrics
 async function updateStockMetrics() {
-    const symbols = ['EUR/USD', 'INDEXSP', 'GBP/USD'];
-    const datasets = [];
+    const response = await fetch('/metrics/stocks/current');
+    const data = await response.json();
     
-    for (const symbol of symbols) {
-        const response = await fetch(`/metrics/stocks/history/${symbol}/24`);
-        const data = await response.json();
-        
-        datasets.push({
-            label: symbol,
-            data: data.map(d => d.price),
-            borderColor: getRandomColor(),
-            fill: false
-        });
-    }
+    const datasets = Object.keys(data).map(symbol => ({
+        label: symbol,
+        data: [data[symbol].price],
+        borderColor: getRandomColor(),
+        fill: false
+    }));
 
     updateStockChart(stockChart, datasets);
 }
@@ -79,7 +74,7 @@ const stockChart = new Chart(document.getElementById('stockChart'), {
 
 // Update charts every minute
 setInterval(updateSystemMetrics, 60000);
-setInterval(updateStockMetrics, 300000);
+setInterval(updateStockMetrics, 60000);  // Update every minute
 
 // Initial update
 updateSystemMetrics();
