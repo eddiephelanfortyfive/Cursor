@@ -37,7 +37,7 @@ class StockMonitor:
                     price=quote['c'],  # Current price
                     high=quote['h'],   # High price of the day
                     low=quote['l'],    # Low price of the day
-                    volume=quote['v']  # Volume
+                    volume=quote.get('v', 0)  # Volume (default to 0 for forex)
                 )
 
                 session = get_db_session()

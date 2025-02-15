@@ -5,6 +5,7 @@ from system_monitor import SystemMonitor
 from stock_monitor import StockMonitor
 import json
 import os
+import logging
 
 # Get the directory containing this file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +18,7 @@ with open(CONFIG_PATH, 'r') as f:
 app = Flask(__name__)
 system_monitor = SystemMonitor()
 stock_monitor = StockMonitor()
+logger = logging.getLogger(__name__)
 
 @app.route('/')
 def index():
@@ -61,6 +63,7 @@ def get_current_stock_metrics_by_symbol(symbol):
 @app.route('/metrics/stocks/history/<symbol>/<int:hours>')
 def get_stock_metrics_history(symbol, hours):
     """Get stock metrics history for the specified symbol and hours"""
+    logger.info(f"Fetching stock history for {symbol} over the last {hours} hours")
     session = get_db_session()
     try:
         since = datetime.utcnow() - timedelta(hours=hours)
