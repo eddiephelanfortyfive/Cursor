@@ -67,7 +67,6 @@ def main():
         port=config['api_server']['port'],
         debug=config['api_server']['debug']
     )
-    print('Flask API started.')
 
 if __name__ == '__main__':
     main()

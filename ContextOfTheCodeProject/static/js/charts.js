@@ -81,54 +81,79 @@ updateSystemMetrics();
 updateStockMetrics();
 
 document.addEventListener('DOMContentLoaded', function() {
-    const stockContainer = document.getElementById('stockContainer');
-    const symbols = ['GOOG', 'TSLA', 'AAPL'];
+    fetch('/metrics/stocks/symbols')
+        .then(response => response.json())
+        .then(symbols => {
+            const stockContainer = document.getElementById('stockContainer');
 
-    symbols.forEach(symbol => {
-        const canvas = document.getElementById(`${symbol}Chart`);
+            symbols.forEach(symbol => {
+                const canvas = document.createElement('canvas');
+                canvas.id = `${symbol}Chart`;
+                canvas.classList.add('chart-container');
+                stockContainer.appendChild(canvas);
 
-        fetch(`/metrics/stocks/history/${symbol}`)
-            .then(response => response.json())
-            .then(data => {
-                console.log(`Data received for ${symbol}:`, data);
+                fetch(`/metrics/stocks/history/${symbol}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(`Data received for ${symbol}:`, data);
 
-                if (data.length === 0) {
-                    console.warn(`No data available for ${symbol}`);
-                    const message = document.createElement('p');
-                    message.textContent = `No data available for ${symbol}`;
-                    stockContainer.appendChild(message);
-                    return;
-                }
-
-                const timestamps = data.map(d => new Date(d.timestamp).toLocaleTimeString());
-                const prices = data.map(d => d.price);
-
-                new Chart(canvas, {
-                    type: 'line',
-                    data: {
-                        labels: timestamps,
-                        datasets: [{
-                            label: `${symbol} Stock Price`,
-                            data: prices,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: {
-                                    unit: 'minute'
-                                }
-                            },
-                            y: {
-                                beginAtZero: false
-                            }
+                        if (data.length === 0) {
+                            console.warn(`No data available for ${symbol}`);
+                            return;
                         }
-                    }
-                });
-            })
-            .catch(error => console.error(`Error fetching historical data for ${symbol}:`, error));
-    });
+
+                        const timestamps = data.map(d => new Date(d.timestamp).toLocaleTimeString());
+                        const prices = data.map(d => d.price);
+
+                        new Chart(canvas, {
+                            type: 'line',
+                            data: {
+                                labels: timestamps,
+                                datasets: [{
+                                    label: `${symbol} Stock Price`,
+                                    data: prices,
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    borderWidth: 2,
+                                    tension: 0.1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        type: 'time',
+                                        time: {
+                                            unit: 'minute'
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: 'Time'
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: false,
+                                        title: {
+                                            display: true,
+                                            text: 'Price (USD)'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error(`Error fetching historical data for ${symbol}:`, error));
+            });
+        })
+        .catch(error => console.error('Error fetching stock symbols:', error));
 }); 
