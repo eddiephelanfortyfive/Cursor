@@ -5,5 +5,5 @@
 /TA Sessions
 /system_metrics.csv
 .venv
-app.log
-monitoring.db
+/ContextOfTheCodeProject/app.log
+/ContextOfTheCodeProject/monitoring.db

@@ -70,7 +70,7 @@ def get_current_stock_metrics():
                 'price': quote['c'],
                 'high': quote['h'],
                 'low': quote['l'],
-                'volume': quote.get('v', 0)
+                'timestamp': datetime.utcnow().isoformat()
             }
         except Exception as e:
             logger.error(f"Error getting current stock metrics for {symbol}: {str(e)}")
@@ -108,7 +108,7 @@ def get_stock_metrics_history(symbol, hours):
 def get_stock_history(symbol):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT timestamp, price FROM stock_metricks WHERE symbol = ? ORDER BY timestamp', (symbol,))
+    cursor.execute('SELECT timestamp, price FROM stock_metrics WHERE symbol = ? ORDER BY timestamp', (symbol,))
     rows = cursor.fetchall()
     conn.close()
     
@@ -120,18 +120,10 @@ def get_stock_history(symbol):
     return jsonify(data)
 
 @app.route('/metrics/stocks/symbols', methods=['GET'])
-def get_stock_symbols():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT symbol FROM stock_metricks')
-    rows = cursor.fetchall()
-    conn.close()
-    
-    symbols = [row['symbol'] for row in rows]
-    
-    # Log the symbols being returned
-    logger.debug(f"Unique stock symbols: {symbols}")
-    
+def get_configured_stock_symbols():
+    """Get stock symbols from config.json"""
+    symbols = config['api']['stocks_to_monitor']
+    logger.debug(f"Configured stock symbols: {symbols}")
     return jsonify(symbols)
 
 if __name__ == '__main__':
