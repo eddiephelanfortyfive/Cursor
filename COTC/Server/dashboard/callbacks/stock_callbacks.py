@@ -8,7 +8,6 @@ from datetime import datetime
 import logging
 import json
 import os
-from pathlib import Path
 from database.models import (
     fetch_stock_symbols,
     fetch_latest_stock_data,
@@ -21,10 +20,10 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 # Get the absolute path to the project root directory
-PROJECT_ROOT = Path(__file__).parents[2].resolve()
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load configuration
-config_path = PROJECT_ROOT / 'config' / 'config.json'
+config_path = os.path.join(PROJECT_ROOT, 'config', 'config.json')
 with open(config_path) as config_file:
     config = json.load(config_file)
 

@@ -5,7 +5,6 @@ import logging
 import datetime
 import json
 import os
-from pathlib import Path
 from dashboard.app import app, LAST_UPDATE_TIME
 from database.models import get_session
 from database.schema import Device
@@ -15,16 +14,16 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)  # Change from INFO to WARNING
 
 # Get the absolute path to the project root directory
-PROJECT_ROOT = Path(__file__).parents[2].resolve()
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Load configuration
-config_path = PROJECT_ROOT / 'config' / 'config.json'
+config_path = os.path.join(PROJECT_ROOT, 'config', 'config.json')
 with open(config_path) as config_file:
     config = json.load(config_file)
 
 # Update database path to be absolute
 if not os.path.isabs(config['database_path']):
-    DATABASE_PATH = str(PROJECT_ROOT / config['database_path'])
+    DATABASE_PATH = os.path.join(PROJECT_ROOT, config['database_path'])
 else:
     DATABASE_PATH = config['database_path']
 

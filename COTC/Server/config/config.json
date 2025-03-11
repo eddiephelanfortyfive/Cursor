@@ -1,5 +1,5 @@
 {
-    "database_path": "system_monitoring.db",
+    "database_path": "/home/eddiephelan45/Cursor/COTC/Server/system_monitoring.db",
     "port": 5000,
     "system_metrics": [
         "cpu_usage",
