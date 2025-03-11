@@ -77,17 +77,18 @@ class ClientAgent:
     
     def register_device(self, max_retries=3):
         """Register this device with the server."""
-        # Create more comprehensive device info
+        # Create device info payload matching exactly what the server expects
         device_info = {
+            # Required fields
             "hostname": self.hostname,
             "mac_address": self.mac_address,
-            "platform": platform.system(),
-            "platform_version": platform.version(),
-            "machine": platform.machine(),
-            "python_version": platform.python_version()
+            
+            # Optional fields
+            "device_id": self.device_id,
+            "os_info": platform.platform()
         }
         
-        logging.info(f"Registering device with server - Hostname: {self.hostname}, MAC: {self.mac_address}, Platform: {platform.system()}")
+        logging.info(f"Registering device with server - Hostname: {self.hostname}, MAC: {self.mac_address}")
         
         for attempt in range(max_retries):
             try:

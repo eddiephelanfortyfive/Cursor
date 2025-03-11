@@ -220,49 +220,73 @@ def register_routes(app, config):
         try:
             payload = request.json
             
-            if not payload or 'device_id' not in payload or 'metrics' not in payload:
+            if not payload or 'metrics' not in payload:
                 return jsonify({"error": "Missing required data"}), 400
             
-            device_id = payload['device_id']
+            # Get identifiers
+            device_id = payload.get('device_id')
+            mac_address = payload.get('mac_address')
+            hostname = payload.get('hostname')
+            
+            # Need at least MAC address or device_id
+            if not mac_address and not device_id:
+                return jsonify({"error": "Either mac_address or device_id is required"}), 400
+            
             metrics = payload['metrics']
             
-            # Get MAC address if provided
-            mac_address = payload.get('mac_address')
-            
-            # Store each metric in the database
-            for metric_name, metric_value in metrics.items():
-                if metric_name in config['system_metrics']:
-                    insert_system_metric(
-                        config['database_path'],
-                        metric_name,
-                        metric_value,
-                        device_id=device_id,
-                        mac_address=mac_address
-                    )
-            
-            # Update device last_seen timestamp
+            # Find the device by MAC address first
             from database.models import get_session, Device
+            from database.schema import get_or_create_device
+            
             session = get_session(config['database_path'])
             try:
-                # Find device by MAC address first if provided
+                # Try to find the device
                 device = None
+                
+                # Check by MAC address first
                 if mac_address:
                     device = session.query(Device).filter_by(mac_address=mac_address).first()
                 
                 # If not found by MAC or MAC not provided, try by device_id
-                if not device:
+                if not device and device_id:
                     device = session.query(Device).filter_by(device_id=device_id).first()
                 
-                if device:
-                    device.last_seen = datetime.now()
-                    session.commit()
+                # If still not found but we have MAC, create a new device
+                if not device and mac_address:
+                    logging.warning(f"Creating new device for MAC: {mac_address}")
+                    device = get_or_create_device(session, device_id=None, mac_address=mac_address, hostname=hostname)
+                    session.add(device)
+                    session.flush()  # Generate ID
+                elif not device:
+                    return jsonify({"error": "Device not found and insufficient information to create one"}), 400
+                
+                # Now we have a valid device, we can store metrics
+                device_id_for_metrics = device.device_id
+                
+                # Update device last_seen timestamp
+                device.last_seen = datetime.now()
+                session.commit()
+                
+                # Store each metric in the database
+                for metric_name, metric_value in metrics.items():
+                    if metric_name in config['system_metrics']:
+                        # Using the found/created device's ID to store metrics
+                        insert_system_metric(
+                            config['database_path'],
+                            metric_name,
+                            metric_value,
+                            device_id=device_id_for_metrics,
+                            mac_address=mac_address
+                        )
+                
+                return jsonify({"message": "Metrics stored successfully"}), 200
+                
             except Exception as e:
                 session.rollback()
-                app.logger.error(f"Error updating device last_seen: {e}")
+                app.logger.error(f"Error processing system metrics: {e}")
+                return jsonify({"error": str(e)}), 500
             finally:
                 session.close()
-            
-            return jsonify({"message": "Metrics stored successfully"}), 200
             
         except Exception as e:
             app.logger.error(f"Error in PUT /metrics/system: {e}")
@@ -276,23 +300,60 @@ def register_routes(app, config):
         Endpoint for clients to poll for pending stock symbols.
         Returns the pending symbol if available, then resets it to None.
         """
-        # Get the device_id from the request
+        # Get identifiers from the request
         device_id = request.args.get('device_id')
+        mac_address = request.args.get('mac_address')
+        hostname = request.args.get('hostname')
         
-        if not device_id:
-            return jsonify({"error": "device_id is required"}), 400
+        # Need at least one identifier
+        if not (device_id or mac_address):
+            return jsonify({"error": "Either mac_address or device_id is required"}), 400
         
-        # Get the current pending symbol
-        symbol = get_pending_stock_symbol()
+        # Verify device exists
+        from database.models import get_session
+        from database.schema import Device, get_or_create_device
         
-        # If there's a pending symbol, return it and reset
-        if symbol:
-            # Reset the pending symbol
-            reset_pending_stock_symbol()
-            return jsonify({"symbol": symbol})
-        
-        # No pending symbol
-        return jsonify({"symbol": None})
+        session = get_session(config['database_path'])
+        try:
+            # Try to find the device
+            device = None
+            
+            # Check by MAC address first
+            if mac_address:
+                device = session.query(Device).filter_by(mac_address=mac_address).first()
+            
+            # If not found by MAC or MAC not provided, try by device_id
+            if not device and device_id:
+                device = session.query(Device).filter_by(device_id=device_id).first()
+            
+            # If still not found but we have MAC, create a new device
+            if not device and mac_address:
+                logging.warning(f"Creating new device for MAC: {mac_address}")
+                device = get_or_create_device(session, device_id=None, mac_address=mac_address, hostname=hostname)
+                session.add(device)
+                session.commit()
+            elif not device:
+                return jsonify({"error": "Device not found and insufficient information to create one"}), 400
+            
+            # Device found or created, proceed with polling
+            # Get the current pending symbol
+            symbol = get_pending_stock_symbol()
+            
+            # If there's a pending symbol, return it and reset
+            if symbol:
+                # Reset the pending symbol
+                reset_pending_stock_symbol()
+                return jsonify({"symbol": symbol})
+            
+            # No pending symbol
+            return jsonify({"symbol": None})
+            
+        except Exception as e:
+            session.rollback()
+            app.logger.error(f"Error in poll_stock_symbol: {e}")
+            return jsonify({"error": str(e)}), 500
+        finally:
+            session.close()
 
     # Update the stock metrics endpoint to support both formats
     @app.route('/metrics/stock/<symbol>', methods=['PUT'])
