@@ -253,26 +253,6 @@ def register_routes(app, config):
         # No pending symbol
         return jsonify({"symbol": None})
 
-    # Endpoint: Set pending stock symbol
-    @app.route('/metrics/stock/set_pending', methods=['POST'])
-    def set_pending_stock_symbol():
-        """
-        Endpoint for the dashboard to set a pending stock symbol for clients to poll.
-        Only sets the symbol for polling without adding it to the database.
-        """
-        if not request.is_json:
-            return jsonify({"error": "Request must be JSON"}), 415
-        
-        symbol = request.json.get('symbol')
-        
-        # Use our direct function to set the pending symbol
-        result = set_pending_stock_symbol_direct(symbol)
-        
-        if result["success"]:
-            return jsonify(result), 200
-        else:
-            return jsonify(result), 400
-
     # Update the stock metrics endpoint to support both formats
     @app.route('/metrics/stock/<symbol>', methods=['PUT'])
     def stock_metrics_endpoint_with_symbol(symbol):
@@ -341,60 +321,6 @@ def register_routes(app, config):
             app.logger.error(f"Error in PUT /metrics/stock/{symbol}: {e}")
             return jsonify({"error": str(e)}), 500
 
-    # Add an endpoint to get all stock symbols
-    @app.route('/metrics/stock/symbols', methods=['GET'])
-    def get_stock_symbols():
-        """
-        GET: Retrieve all stock symbols from the database
-        """
-        try:
-            symbols = fetch_stock_symbols(config['database_path'])
-            return jsonify(symbols), 200
-        except Exception as e:
-            app.logger.error(f"Error in GET /metrics/stock/symbols: {e}")
-            return jsonify({"error": str(e)}), 500
-
-    # Add an endpoint to get latest price for a specific symbol
-    @app.route('/metrics/stock/<symbol>', methods=['GET'])
-    def get_stock_price(symbol):
-        """
-        GET: Retrieve the latest price for a specific stock symbol
-        """
-        try:
-            if not symbol:
-                return jsonify({"error": "Symbol parameter is required"}), 400
-                
-            symbol = symbol.upper().strip()
-            latest_data = fetch_latest_stock_data(config['database_path'], symbol)
-            
-            if not latest_data:
-                return jsonify({"error": f"No data found for symbol {symbol}"}), 404
-                
-            return jsonify(latest_data), 200
-        except Exception as e:
-            app.logger.error(f"Error in GET /metrics/stock/{symbol}: {e}")
-            return jsonify({"error": str(e)}), 500
-
-    # Add an endpoint to get historical data for a specific symbol
-    @app.route('/metrics/stock/history/<symbol>', methods=['GET'])
-    def get_stock_history_endpoint(symbol):
-        """
-        GET: Retrieve historical data for a specific stock symbol
-        """
-        try:
-            if not symbol:
-                return jsonify({"error": "Symbol parameter is required"}), 400
-                
-            symbol = symbol.upper().strip()
-            history = get_stock_history(config['database_path'], symbol)
-            
-            if not history:
-                return jsonify([]), 200  # Return empty array if no history
-                
-            return jsonify(history), 200
-        except Exception as e:
-            app.logger.error(f"Error in GET /metrics/stock/history/{symbol}: {e}")
-            return jsonify({"error": str(e)}), 500
 
     # Add the original endpoint to support both formats
     @app.route('/metrics/stock', methods=['PUT'])

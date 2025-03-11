@@ -173,11 +173,14 @@ def display_latest_stock_data_and_table(symbol):
                         # Skip this item if there's an error
                         continue
                 
-                # Show only the 10 most recent entries
-                table_data = sorted(table_data, key=lambda x: x['timestamp'], reverse=True)[:10]
+                # Sort the data by timestamp (newest first) but show all entries
+                table_data = sorted(table_data, key=lambda x: x['timestamp'], reverse=True)
+                
+                # Count the total number of entries
+                total_entries = len(table_data)
                 
                 table = html.Div([
-                    html.H4("Price History", className="mb-3"),
+                    html.H4(f"Price History ({total_entries} entries)", className="mb-3"),
                     dash_table.DataTable(
                         id='stock-history-table',
                         columns=[
@@ -190,6 +193,12 @@ def display_latest_stock_data_and_table(symbol):
                         style_header=TABLE_STYLE['header'],
                         style_data=TABLE_STYLE['data'],
                         style_data_conditional=TABLE_STYLE['conditional'],
+                        # Add pagination to handle large datasets
+                        page_size=25,
+                        page_action="native",
+                        sort_action="native",
+                        sort_mode="multi",
+                        filter_action="native",
                     )
                 ], className="mt-4")
                 
@@ -272,17 +281,22 @@ def update_stock_chart(symbol):
             
             # Update layout
             fig.update_layout(
-                title=f"{symbol} Price History",
+                title=f"{symbol} Price History ({len(dates)} data points)",
                 xaxis_title="Date",
                 yaxis_title="Price ($)",
                 template="plotly_white",
-                height=400,
+                height=500,  # Increase height for better visibility
                 hoverlabel=dict(
                     bgcolor="white",
                     font_size=12,
                     font_family="Arial"
                 ),
-                showlegend=False
+                showlegend=False,
+                # Add range slider for easy navigation of historical data
+                xaxis=dict(
+                    rangeslider=dict(visible=True),
+                    type='date'
+                )
             )
             
             # Add hover data formatting
