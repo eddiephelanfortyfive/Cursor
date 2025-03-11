@@ -1,0 +1,22 @@
+{
+    "server_url": "http://127.0.0.1:5000",
+    "collection_interval": 10,
+    "stock_interval": 10,
+    "debug": true,
+    "metrics": {
+        "enabled": [
+            "cpu_usage",
+            "ram_usage"
+        ]
+    },
+    "stocks": {
+        "api_key": "cuoe1ghr01qve8pspk10cuoe1ghr01qve8pspk1g",
+        "symbols": [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "AMZN",
+            "META"
+        ]
+    }
+}

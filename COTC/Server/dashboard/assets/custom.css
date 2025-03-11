@@ -1,0 +1,158 @@
+/* Custom CSS for the dashboard */
+
+/* General page styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #343a40;
+}
+
+/* Card styling */
+.card {
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Header styling */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: bold;
+}
+
+/* Dashboard dropdown menu */
+.Select-menu-outer {
+  z-index: 9999 !important;
+}
+
+.Select-control {
+  border-radius: 4px;
+}
+
+/* Custom dropdown styles to ensure dropdowns are visible */
+.dash-dropdown .Select {
+  z-index: 1000;
+}
+
+.dash-dropdown .Select-menu-outer {
+  display: block !important;
+  position: absolute !important;
+}
+
+/* Override for Dash tables */
+.dash-table-container .dash-spreadsheet-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.dash-table-container {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Gauge charts */
+.gauge-chart {
+  transition: transform 0.3s ease;
+}
+
+.gauge-chart:hover {
+  transform: scale(1.02);
+}
+
+/* Buttons */
+button.btn {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+button.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button.btn:active {
+  transform: translateY(0);
+}
+
+/* Refresh button styling */
+.refresh-button {
+  margin-left: 10px;
+  transition: transform 0.2s ease;
+}
+
+.refresh-button:hover {
+  transform: rotate(180deg);
+}
+
+/* Animation for device change */
+@keyframes highlight {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(0, 123, 255, 0.1); }
+  100% { background-color: transparent; }
+}
+
+.highlight-change {
+  animation: highlight 1.5s ease;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Footer styling */
+.footer {
+  margin-top: 20px;
+  padding: 10px 0;
+  background-color: #f1f1f1;
+  border-top: 1px solid #ddd;
+  font-size: 0.9em;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 15px;
+  }
+  
+  .navbar-brand {
+    font-size: 1.25rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  body.dark-theme {
+    background-color: #343a40;
+    color: #f8f9fa;
+  }
+  
+  body.dark-theme .card {
+    background-color: #454d55;
+    color: #f8f9fa;
+  }
+  
+  body.dark-theme .navbar {
+    background-color: #212529 !important;
+  }
+  
+  body.dark-theme .footer {
+    background-color: #212529;
+    color: #f8f9fa;
+    border-top: 1px solid #454d55;
+  }
+} 

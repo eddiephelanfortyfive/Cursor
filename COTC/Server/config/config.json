@@ -1,0 +1,15 @@
+{
+    "database_path": "system_monitoring.db",
+    "port": 5000,
+    "system_metrics": [
+        "cpu_usage",
+        "ram_usage"
+    ],
+    "refresh_intervals": {
+        "system_metrics": 10,
+        "stock_data": 30,
+        "device_list": 60,
+        "history_data": 30,
+        "clock": 1
+    }
+}
