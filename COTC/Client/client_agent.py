@@ -114,12 +114,25 @@ class ClientAgent:
         while self.running:
             try:
                 stock_data = self.stock_collector.collect_stock_data()
+                symbols_to_remove = []
+                
                 for symbol, price in stock_data.items():
+                    # Check if the price is 0, indicating we should remove the symbol
+                    if price == 0:
+                        logging.warning(f"Stock {symbol} returned price of 0, will remove from collection list")
+                        symbols_to_remove.append(symbol)
+                        continue
+                        
                     try:
                         self.api_client.send_stock_data(symbol, price)
                     except Exception as e:
                         logging.warning(f"Failed to send stock data to server: {e}")
                         # Continue collecting stock data even if sending fails
+                
+                # Remove any symbols that returned a price of 0
+                for symbol in symbols_to_remove:
+                    self.remove_stock_symbol(symbol)
+                    
             except Exception as e:
                 logging.error(f"Error collecting stock data: {e}")
             
@@ -159,12 +172,6 @@ class ClientAgent:
                     updated_symbols = self.stock_collector.stocks_to_collect
                     logging.info(f"Updated stock symbols list: {updated_symbols}")
                     
-                    # Register with the server that we're tracking this symbol
-                    if self.api_client.add_stock_symbol(symbol):
-                        logging.info(f"Successfully registered {symbol} with server")
-                    else:
-                        logging.warning(f"Failed to register {symbol} with server")
-                    
                     # Update the config file with the new symbol
                     self.update_config_with_new_symbol(symbol)
                 else:
@@ -203,6 +210,38 @@ class ClientAgent:
             logging.info(f"Updated configuration file with new stock symbol: {symbol}")
         except Exception as e:
             logging.error(f"Failed to update config with new symbol: {e}")
+    
+    def remove_stock_symbol(self, symbol):
+        """
+        Remove a stock symbol from the collection list.
+        
+        Args:
+            symbol: Stock symbol to remove
+        """
+        try:
+            # Make sure the symbol is uppercase for consistency
+            symbol = symbol.upper()
+            
+            # Remove from stock collector if it exists
+            if symbol in self.stock_collector.stocks_to_collect:
+                self.stock_collector.stocks_to_collect.remove(symbol)
+                logging.info(f"Removed {symbol} from stock collection list")
+                logging.info(f"Updated stock symbols list: {self.stock_collector.stocks_to_collect}")
+            else:
+                logging.warning(f"Symbol {symbol} not found in collection list, nothing to remove")
+                
+            # Also remove from config if it exists there
+            if symbol in self.config["stocks"]["symbols"]:
+                self.config["stocks"]["symbols"].remove(symbol)
+                
+                # Save the updated config
+                config_path = Path(__file__).parent / "client_config.json"
+                with open(config_path, 'w') as f:
+                    json.dump(self.config, f, indent=4)
+                    
+                logging.info(f"Removed {symbol} from configuration file")
+        except Exception as e:
+            logging.error(f"Error removing stock symbol {symbol}: {e}", exc_info=True)
     
     def start(self):
         """Start the client agent."""

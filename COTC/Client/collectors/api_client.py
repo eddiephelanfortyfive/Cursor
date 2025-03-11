@@ -121,29 +121,7 @@ class APIClient:
                 logging.error(f"Failed to send stock data: {response.status_code} - {response.text}")
             return False
     
-    def add_stock_symbol(self, symbol):
-        """
-        Add a new stock symbol to the server for tracking.
-        
-        Args:
-            symbol: Stock symbol to add
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        payload = {
-            "symbol": symbol
-        }
-        
-        response = self._make_request('POST', '/metrics/stock/add', json=payload)
-        
-        if response and (response.status_code == 200 or response.status_code == 201):
-            logging.info(f"Stock symbol added successfully: {symbol}")
-            return True
-        else:
-            if response:
-                logging.error(f"Failed to add stock symbol: {response.status_code} - {response.text}")
-            return False
+
             
     def poll_stock_symbols(self, device_id):
         """

@@ -1,5 +1,5 @@
 {
-    "server_url": "http://127.0.0.1:5000",
+    "server_url": "https://eddiephelan45.pythonanywhere.com",
     "collection_interval": 10,
     "stock_interval": 10,
     "debug": true,
