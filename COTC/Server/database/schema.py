@@ -13,6 +13,7 @@ class Device(Base):
     
     id = Column(Integer, primary_key=True)
     device_id = Column(String, nullable=False, unique=True)  # Unique identifier for the device
+    mac_address = Column(String, nullable=False, unique=True)  # MAC address of the device
     hostname = Column(String, nullable=False)
     os_info = Column(String, nullable=True)
     last_seen = Column(DateTime, default=datetime.datetime.now, nullable=False)
@@ -21,11 +22,12 @@ class Device(Base):
     metrics = relationship("SystemMetric", back_populates="device")
     
     def __repr__(self):
-        return f"<Device(device_id='{self.device_id}', hostname='{self.hostname}')>"
+        return f"<Device(device_id='{self.device_id}', mac_address='{self.mac_address}', hostname='{self.hostname}')>"
     
     def to_dict(self):
         return {
             "device_id": self.device_id,
+            "mac_address": self.mac_address,
             "hostname": self.hostname,
             "os_info": self.os_info,
             "last_seen": self.last_seen.isoformat()
@@ -107,8 +109,8 @@ class StockData(Base):
             "timestamp": self.timestamp.isoformat()
         }
 
-# Helper function to get or create a device based on device_id
-def get_or_create_device(session, device_id=None, hostname=None, os_info=None):
+# Helper function to get or create a device based on device_id or MAC address
+def get_or_create_device(session, device_id=None, mac_address=None, hostname=None, os_info=None):
     # If no device_id provided, generate a UUID as fallback
     if not device_id:
         # Create a UUID as fallback if no device ID is provided
@@ -126,13 +128,29 @@ def get_or_create_device(session, device_id=None, hostname=None, os_info=None):
             # Fallback for Windows
             os_info = os.name
     
-    # Find existing device or create a new one
+    # First check if a device with this MAC address exists
+    if mac_address:
+        device_by_mac = session.query(Device).filter_by(mac_address=mac_address).first()
+        if device_by_mac:
+            # If found by MAC but device_id is different, update it
+            if device_by_mac.device_id != device_id:
+                device_by_mac.device_id = device_id
+            return device_by_mac
+    
+    # If not found by MAC or no MAC provided, check by device_id
     device = session.query(Device).filter_by(device_id=device_id).first()
     
     if not device:
+        # Make sure we have a MAC address for new devices
+        if not mac_address:
+            # Generate a placeholder MAC if none provided
+            # This is just a fallback - in practice, real MAC addresses should be provided
+            mac_address = f"auto-{device_id[:12]}"
+            
         # Create new device
         device = Device(
             device_id=device_id,
+            mac_address=mac_address,
             hostname=hostname,
             os_info=os_info
         )

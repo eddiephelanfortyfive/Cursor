@@ -28,7 +28,7 @@ with open(config_path) as config_file:
 
 # Update database path to be absolute
 if not os.path.isabs(config['database_path']):
-    DATABASE_PATH = str(PROJECT_ROOT / config['database_path'])
+    DATABASE_PATH = os.path.join(PROJECT_ROOT, config['database_path'])
 else:
     DATABASE_PATH = config['database_path']
 

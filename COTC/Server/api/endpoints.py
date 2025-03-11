@@ -129,21 +129,48 @@ def register_routes(app, config):
             device_data = request.json
             logging.warning(f"Registering device with data: {device_data}")
             
-            if not device_data or not all(k in device_data for k in ['device_id', 'hostname']):
-                return jsonify({"error": "Missing required device information"}), 400
+            if not device_data or not all(k in device_data for k in ['device_id', 'hostname', 'mac_address']):
+                return jsonify({"error": "Missing required device information (device_id, hostname, and mac_address are required)"}), 400
             
             from database.models import get_session
             from database.schema import Device
             
             session = get_session(config['database_path'])
             try:
-                # Check if device already exists
+                # First check if a device with this MAC address already exists
+                existing_device_by_mac = session.query(Device).filter_by(mac_address=device_data['mac_address']).first()
+                
+                if existing_device_by_mac:
+                    # Device with this MAC already exists - update it
+                    logging.warning(f"Found device with MAC address {device_data['mac_address']}, updating it")
+                    existing_device_by_mac.hostname = device_data['hostname']
+                    existing_device_by_mac.last_seen = datetime.now()
+                    # Update device_id if it's different (client might have generated a new one)
+                    if existing_device_by_mac.device_id != device_data['device_id']:
+                        logging.warning(f"Updating device_id from {existing_device_by_mac.device_id} to {device_data['device_id']}")
+                        existing_device_by_mac.device_id = device_data['device_id']
+                    message = "Device updated by MAC address"
+                    status_code = 200
+                    
+                    session.commit()
+                    return jsonify({
+                        "message": message,
+                        "device_id": existing_device_by_mac.device_id,
+                        "mac_address": existing_device_by_mac.mac_address,
+                        "hostname": existing_device_by_mac.hostname
+                    }), status_code
+                
+                # If no device with this MAC exists, check if device_id exists
                 existing_device = session.query(Device).filter_by(device_id=device_data['device_id']).first()
                 
                 if existing_device:
                     # Update existing device
                     existing_device.hostname = device_data['hostname']
                     existing_device.last_seen = datetime.now()
+                    # Update MAC address if it's different
+                    if existing_device.mac_address != device_data['mac_address']:
+                        logging.warning(f"Updating MAC address from {existing_device.mac_address} to {device_data['mac_address']}")
+                        existing_device.mac_address = device_data['mac_address']
                     message = "Device updated"
                     status_code = 200
                     logging.warning(f"Updated existing device: {existing_device.device_id}")
@@ -151,13 +178,14 @@ def register_routes(app, config):
                     # Create new device
                     new_device = Device(
                         device_id=device_data['device_id'],
+                        mac_address=device_data['mac_address'],
                         hostname=device_data['hostname'],
                         last_seen=datetime.now()
                     )
                     session.add(new_device)
                     message = "Device registered"
                     status_code = 201
-                    logging.warning(f"Created new device: {new_device.device_id}")
+                    logging.warning(f"Created new device: {new_device.device_id} with MAC: {new_device.mac_address}")
                 
                 session.commit()
                 
@@ -168,6 +196,7 @@ def register_routes(app, config):
                 return jsonify({
                     "message": message,
                     "device_id": device_data['device_id'],
+                    "mac_address": device_data['mac_address'],
                     "hostname": device_data['hostname']
                 }), status_code
                 
@@ -197,6 +226,9 @@ def register_routes(app, config):
             device_id = payload['device_id']
             metrics = payload['metrics']
             
+            # Get MAC address if provided
+            mac_address = payload.get('mac_address')
+            
             # Store each metric in the database
             for metric_name, metric_value in metrics.items():
                 if metric_name in config['system_metrics']:
@@ -204,14 +236,23 @@ def register_routes(app, config):
                         config['database_path'],
                         metric_name,
                         metric_value,
-                        device_id=device_id
+                        device_id=device_id,
+                        mac_address=mac_address
                     )
             
             # Update device last_seen timestamp
             from database.models import get_session, Device
             session = get_session(config['database_path'])
             try:
-                device = session.query(Device).filter_by(device_id=device_id).first()
+                # Find device by MAC address first if provided
+                device = None
+                if mac_address:
+                    device = session.query(Device).filter_by(mac_address=mac_address).first()
+                
+                # If not found by MAC or MAC not provided, try by device_id
+                if not device:
+                    device = session.query(Device).filter_by(device_id=device_id).first()
+                
                 if device:
                     device.last_seen = datetime.now()
                     session.commit()

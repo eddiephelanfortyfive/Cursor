@@ -20,7 +20,24 @@ with open(config_path) as config_file:
 # Update database path to be absolute
 if not os.path.isabs(config['database_path']):
     config['database_path'] = os.path.join(PROJECT_ROOT, config['database_path'])
-    
+
+# Ensure the database directory exists
+db_path = Path(config['database_path'])
+db_dir = db_path.parent
+
+# First, check if the directory exists
+if not db_dir.exists():
+    logger.warning(f"Database directory {db_dir} does not exist. Trying to create it or fallback to project directory.")
+    try:
+        # Try to create the directory
+        db_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created database directory {db_dir}")
+    except Exception as e:
+        # If we can't create the directory, fallback to project directory
+        logger.warning(f"Could not create database directory: {e}")
+        config['database_path'] = os.path.join(PROJECT_ROOT, "system_monitoring.db")
+        logger.warning(f"Falling back to local database path: {config['database_path']}")
+
 # Log the actual database path for debugging
 logger.info(f"Using database at: {config['database_path']}")
 

@@ -21,7 +21,7 @@ def get_session(db_path):
     Session = sessionmaker(bind=engine)
     return Session()
 
-def insert_system_metric(db_path, metric_name, metric_value, device_id=None):
+def insert_system_metric(db_path, metric_name, metric_value, device_id=None, mac_address=None):
     """Insert a system metric record into the database."""
     session = get_session(db_path)
     try:
@@ -30,14 +30,24 @@ def insert_system_metric(db_path, metric_name, metric_value, device_id=None):
             logging.error("No device_id provided for system metric")
             return False
         
-        # Try to find the device first without creating a new one
-        device = session.query(Device).filter_by(device_id=device_id).first()
+        # Try to find the device first by MAC address if provided
+        device = None
+        if mac_address:
+            device = session.query(Device).filter_by(mac_address=mac_address).first()
+            # If found by MAC but device_id is different, update it
+            if device and device.device_id != device_id:
+                logging.warning(f"Device found by MAC {mac_address} has different device_id: {device.device_id} vs {device_id}")
+                device.device_id = device_id
+        
+        # If not found by MAC, try to find by device_id
+        if not device:
+            device = session.query(Device).filter_by(device_id=device_id).first()
         
         # Only create the device if it doesn't exist
         if not device:
             # This should rarely happen since devices should be registered first
             logging.debug(f"Device {device_id} not found, creating a new one")
-            device = get_or_create_device(session, device_id)
+            device = get_or_create_device(session, device_id, mac_address=mac_address)
         
         # Get or create the metric type
         metric_type = session.query(MetricType).filter_by(name=metric_name).first()
