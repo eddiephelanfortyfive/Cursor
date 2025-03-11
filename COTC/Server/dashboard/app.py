@@ -5,10 +5,12 @@ from datetime import datetime
 # Initialize app-level variables
 LAST_UPDATE_TIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def create_dash_app():
+def create_dash_app(server=None):
     """Create and configure the Dash application"""
     app = dash.Dash(
         __name__, 
+        server=server,  # Use the provided Flask server if available
+        url_base_pathname='/dashboard/' if server else '/',
         external_stylesheets=[
             dbc.themes.BOOTSTRAP,
             "https://use.fontawesome.com/releases/v5.15.4/css/all.css"
