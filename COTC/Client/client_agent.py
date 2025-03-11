@@ -10,6 +10,10 @@ import threading
 import time
 from pathlib import Path
 import uuid
+import subprocess
+import re
+from collections import namedtuple
+import platform
 
 from collectors.pc_metrics import PCMetricsCollector
 from collectors.stock_collector import StockCollector
@@ -39,9 +43,11 @@ class ClientAgent:
             self.stock_collector = None
             logging.warning("No stock API key provided - stock collection disabled")
         
-        # Generate a unique device ID
-        self.device_id = str(uuid.uuid4())
+        # Get device identification
+        self.device_id = str(uuid.uuid4())  # Keep for backward compatibility
         self.hostname = socket.gethostname()
+        self.mac_address = self.get_mac_address()
+        logging.info(f"Device identification - Hostname: {self.hostname}, MAC: {self.mac_address}")
         
         # Try to register device but don't fail if it doesn't work
         self.register_device()
@@ -71,10 +77,17 @@ class ClientAgent:
     
     def register_device(self, max_retries=3):
         """Register this device with the server."""
+        # Create more comprehensive device info
         device_info = {
-            "device_id": self.device_id,
-            "hostname": self.hostname
+            "hostname": self.hostname,
+            "mac_address": self.mac_address,
+            "platform": platform.system(),
+            "platform_version": platform.version(),
+            "machine": platform.machine(),
+            "python_version": platform.python_version()
         }
+        
+        logging.info(f"Registering device with server - Hostname: {self.hostname}, MAC: {self.mac_address}, Platform: {platform.system()}")
         
         for attempt in range(max_retries):
             try:
@@ -97,7 +110,7 @@ class ClientAgent:
             try:
                 metrics = self.pc_metrics.collect_metrics()
                 try:
-                    self.api_client.send_system_metrics(self.device_id, metrics)
+                    self.api_client.send_system_metrics(self.hostname, self.mac_address, metrics)
                 except Exception as e:
                     logging.warning(f"Failed to send metrics to server: {e}")
                     # Continue collecting metrics even if sending fails
@@ -156,8 +169,8 @@ class ClientAgent:
             
             try:
                 # Poll for new stock symbols
-                logging.debug(f"Making poll request to server (device_id: {self.device_id})")
-                symbol = self.api_client.poll_stock_symbols(self.device_id)
+                logging.debug(f"Making poll request to server (Hostname: {self.hostname}, MAC: {self.mac_address})")
+                symbol = self.api_client.poll_stock_symbols(self.hostname, self.mac_address)
                 
                 if symbol:
                     logging.info(f"Processing new stock symbol: {symbol}")
@@ -294,6 +307,79 @@ class ClientAgent:
             self.stock_polling_thread.join()
         
         logging.info("Client agent stopped")
+
+    def get_mac_address(self):
+        """Get the MAC address of the primary network interface."""
+        try:
+            # Platform-specific commands to get MAC address
+            system = platform.system()
+            
+            if system == "Windows":
+                # Windows
+                output = subprocess.check_output("ipconfig /all").decode('utf-8')
+                for line in output.split('\n'):
+                    if "Physical Address" in line:
+                        mac_address = line.split(':')[1].strip()
+                        return mac_address
+                        
+            elif system == "Darwin":  # macOS
+                # macOS - get first available en* interface (usually en0 is the built-in)
+                try:
+                    # First try to get the MAC address of en0 (usually the main interface)
+                    output = subprocess.check_output(["ifconfig", "en0"]).decode('utf-8')
+                    mac_match = re.search(r'ether\s+([0-9a-fA-F:]+)', output)
+                    if mac_match:
+                        return mac_match.group(1)
+                except subprocess.CalledProcessError:
+                    # If en0 doesn't exist, try to find any en* interface
+                    try:
+                        output = subprocess.check_output(["ifconfig"]).decode('utf-8')
+                        # Look for en* interfaces
+                        interfaces = re.findall(r'(en\d+):', output)
+                        for interface in interfaces:
+                            try:
+                                output = subprocess.check_output(["ifconfig", interface]).decode('utf-8')
+                                mac_match = re.search(r'ether\s+([0-9a-fA-F:]+)', output)
+                                if mac_match:
+                                    return mac_match.group(1)
+                            except:
+                                continue
+                    except:
+                        pass
+                    
+            elif system == "Linux":
+                # Linux
+                output = subprocess.check_output(["ip", "link", "show"]).decode('utf-8')
+                mac_match = re.search(r'link/ether\s+([0-9a-fA-F:]+)', output)
+                if mac_match:
+                    return mac_match.group(1)
+            
+            # If we get here, we couldn't find the MAC address with platform-specific methods
+            # Try a more generic approach
+            NetworkInterface = namedtuple('NetworkInterface', ['name', 'mac'])
+            addresses = []
+            
+            # Get all network interfaces
+            for interface in socket.if_nameindex():
+                try:
+                    mac = subprocess.check_output(["ifconfig", interface[1]]).decode('utf-8')
+                    mac_match = re.search(r'(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}', mac)
+                    if mac_match:
+                        addresses.append(NetworkInterface(interface[1], mac_match.group(0)))
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    pass
+            
+            # Filter out loopback and return the first physical interface
+            for interface in addresses:
+                if not interface.name.startswith('lo'):
+                    return interface.mac
+            
+            # Last resort: Use a dummy MAC address
+            logging.warning("Could not determine MAC address, using a dummy value")
+            return "00:00:00:00:00:01"
+        except Exception as e:
+            logging.warning(f"Failed to get MAC address: {e}")
+            return "00:00:00:00:00:01"  # Return a dummy MAC address instead of "Unknown"
 
 def main():
     """Main entry point."""

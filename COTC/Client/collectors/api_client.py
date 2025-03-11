@@ -59,29 +59,59 @@ class APIClient:
         Returns:
             True if successful, False otherwise
         """
+        logging.info(f"Sending registration request with data: {device_info}")
+        
+        # First try the newer endpoint that expects hostname and MAC address
         response = self._make_request('POST', '/devices/register', json=device_info)
         
         if response and (response.status_code == 200 or response.status_code == 201):
             logging.info(f"Device registered successfully: {device_info['hostname']}")
             return True
         else:
-            if response:
-                logging.error(f"Failed to register device: {response.status_code} - {response.text}")
-            return False
+            # If that fails, try a backup approach - use the metrics endpoint directly
+            # This will create the device record if it doesn't exist
+            metrics = {"cpu_usage": 0, "ram_usage": 0}  # Dummy metrics
+            metrics_payload = {
+                "hostname": device_info["hostname"],
+                "mac_address": device_info["mac_address"],
+                "metrics": metrics
+            }
+            
+            metrics_response = self._make_request('PUT', '/metrics/system', json=metrics_payload)
+            
+            if metrics_response and metrics_response.status_code == 200:
+                logging.info(f"Device registered via metrics endpoint: {device_info['hostname']}")
+                return True
+            else:
+                if response:
+                    try:
+                        error_text = response.text
+                        try:
+                            error_json = response.json()
+                            logging.error(f"Failed to register device: {response.status_code} - {error_json}")
+                        except:
+                            logging.error(f"Failed to register device: {response.status_code} - {error_text}")
+                    except:
+                        logging.error(f"Failed to register device: {response.status_code} - Unable to read response")
+                else:
+                    logging.error("Failed to register device: No response received")
+                return False
     
-    def send_system_metrics(self, device_id, metrics):
+    def send_system_metrics(self, hostname, mac_address, metrics):
         """
         Send system metrics to the server.
         
         Args:
-            device_id: The device ID
+            hostname: The device hostname
+            mac_address: The device MAC address
             metrics: Dictionary of metrics to send
             
         Returns:
             True if successful, False otherwise
         """
         payload = {
-            "device_id": device_id,
+            "hostname": hostname,
+            "mac_address": mac_address,
             "metrics": metrics
         }
         
@@ -121,20 +151,19 @@ class APIClient:
                 logging.error(f"Failed to send stock data: {response.status_code} - {response.text}")
             return False
     
-
-            
-    def poll_stock_symbols(self, device_id):
+    def poll_stock_symbols(self, hostname, mac_address):
         """
         Poll the server for pending stock symbols.
         
         Args:
-            device_id: The ID of this client device
+            hostname: The device hostname
+            mac_address: The device MAC address
             
         Returns:
             Stock symbol (str) if available, None otherwise
         """
-        logging.info(f"Making poll request to {self.server_url}/metrics/stock/poll (device_id: {device_id})")
-        response = self._make_request('GET', f'/metrics/stock/poll?device_id={device_id}')
+        logging.info(f"Making poll request to {self.server_url}/metrics/stock/poll (hostname: {hostname}, MAC: {mac_address})")
+        response = self._make_request('GET', f'/metrics/stock/poll?hostname={hostname}&mac_address={mac_address}')
         
         if response:
             logging.info(f"Poll response received - Status: {response.status_code}")
