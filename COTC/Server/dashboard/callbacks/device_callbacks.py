@@ -5,9 +5,9 @@ import random
 from dashboard.app import app
 from dashboard.utils.config import API_BASE_URL
 
-# Setup device callbacks logging
+# Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)  # Change from INFO to WARNING
 
 # Callback to trigger data refresh on device selection
 @app.callback(

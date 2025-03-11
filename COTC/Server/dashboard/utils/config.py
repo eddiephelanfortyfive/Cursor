@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # Constants for API connection
 API_HOST = "127.0.0.1"
 API_PORT = int(os.environ.get('API_PORT', 5000))
-API_BASE_URL = f"http://{API_HOST}:{API_PORT}"
+API_BASE_URL = "http://127.0.0.1:5000"
 
 def load_config():
     """Load configuration from config.json"""

@@ -8,9 +8,12 @@ from dashboard.app import app, LAST_UPDATE_TIME
 from dashboard.components.charts import create_gauge_figure, create_error_gauge, get_color_based_on_value
 from dashboard.utils.config import API_BASE_URL
 
-# Setup metrics callbacks logging
+# Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)  # Change from INFO to WARNING
+
+# Global variable for last update time
+LAST_UPDATE_TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # Callback to update CPU and RAM gauges
 @app.callback(

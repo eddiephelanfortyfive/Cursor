@@ -1,22 +1,25 @@
 import logging
 import datetime
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, create_engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
 from .schema import get_session, init_db, SystemMetric, StockData, MetricType, StockSymbol, Device, get_or_create_device
 
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set logging level to WARNING to reduce terminal clutter
+logging.basicConfig(level=logging.WARNING)
 
 def init_database(db_path):
-    """Initialize the database and create tables if they don't exist."""
-    try:
-        engine = init_db(db_path)
-        logging.info(f"Database initialized at {db_path}")
-        return True
-    except Exception as e:
-        logging.error(f"Error initializing database: {e}")
-        return False
+    """Initialize the database with required tables"""
+    engine = create_engine(f'sqlite:///{db_path}')
+    init_db(db_path)
+    logging.debug(f"Database initialized at {db_path}")
+    
+def get_session(db_path):
+    """Create and return a session for the database"""
+    engine = create_engine(f'sqlite:///{db_path}')
+    Session = sessionmaker(bind=engine)
+    return Session()
 
 def insert_system_metric(db_path, metric_name, metric_value, device_id=None):
     """Insert a system metric record into the database."""
@@ -33,7 +36,7 @@ def insert_system_metric(db_path, metric_name, metric_value, device_id=None):
         # Only create the device if it doesn't exist
         if not device:
             # This should rarely happen since devices should be registered first
-            logging.info(f"Device {device_id} not found, creating a new one")
+            logging.debug(f"Device {device_id} not found, creating a new one")
             device = get_or_create_device(session, device_id)
         
         # Get or create the metric type
@@ -52,11 +55,11 @@ def insert_system_metric(db_path, metric_name, metric_value, device_id=None):
         )
         session.add(metric)
         session.commit()
-        logging.info(f"Inserted system metric for device {device.hostname}: {metric_name}={metric_value}")
+        logging.debug(f"Inserted system metric for device {device.hostname}: {metric_name}={metric_value}")
         return True
-    except SQLAlchemyError as e:
+    except Exception as e:
         session.rollback()
-        logging.error(f"Database error inserting system metric: {e}")
+        logging.error(f"Error inserting system metric: {e}")
         return False
     finally:
         session.close()
@@ -80,11 +83,11 @@ def insert_stock_data(db_path, symbol, price):
         )
         session.add(stock_data)
         session.commit()
-        logging.info(f"Inserted stock data: {symbol}={price}")
+        logging.debug(f"Inserted stock data: {symbol}={price}")
         return True
-    except SQLAlchemyError as e:
+    except Exception as e:
         session.rollback()
-        logging.error(f"Database error inserting stock data: {e}")
+        logging.error(f"Error inserting stock data: {e}")
         return False
     finally:
         session.close()

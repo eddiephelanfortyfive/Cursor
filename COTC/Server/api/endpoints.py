@@ -12,13 +12,25 @@ import logging
 import os
 from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
+from pathlib import Path
+
+# Configure Werkzeug logger to reduce terminal clutter
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 # Global flag to track if the database has been initialized
 _DATABASE_INITIALIZED = False
 
+# Get the absolute path to the project root directory
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+
 # Load configuration
-with open('config/config.json') as config_file:
+config_path = PROJECT_ROOT / 'config' / 'config.json'
+with open(config_path) as config_file:
     config = json.load(config_file)
+
+# Update database path to be absolute
+if not os.path.isabs(config['database_path']):
+    config['database_path'] = str(PROJECT_ROOT / config['database_path'])
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -49,7 +61,7 @@ def check_tables_exist(db_path):
         return False
 
 # Initialize database with proper table verification
-init_flag_file = '.db_initialized'
+init_flag_file = PROJECT_ROOT / '.db_initialized'
 tables_exist = check_tables_exist(config['database_path'])
 
 if os.path.exists(init_flag_file) and tables_exist:
@@ -291,7 +303,3 @@ def get_stock_symbols():
 def get_stock_history_endpoint(symbol):
     history = get_stock_history(config['database_path'], symbol)
     return jsonify(history)
-
-# Run the Flask app
-if __name__ == '__main__':
-    app.run(debug=True)

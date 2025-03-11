@@ -6,10 +6,11 @@ import datetime
 import requests
 from dashboard.app import app, LAST_UPDATE_TIME
 from dashboard.utils.config import API_BASE_URL
+import time
 
-# Setup page callbacks logging
+# Set up logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)  # Change from INFO to WARNING
 
 # Callback to update UI refresh animation
 @app.callback(

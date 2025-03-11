@@ -13,8 +13,8 @@ import random
 # Import app instance instead of creating a new one
 from dashboard.app import app
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging - change to WARNING level to reduce terminal output
+logging.basicConfig(level=logging.WARNING)
 
 # Get the current directory to locate config.json
 current_dir = os.path.dirname(os.path.abspath(__file__))

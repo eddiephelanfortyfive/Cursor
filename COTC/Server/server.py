@@ -1,14 +1,29 @@
+import json
+import os
+import logging
+from flask import Flask
+
+# Set up logging - change to WARNING level to reduce terminal output
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
+
+# Import the Flask API app
+from api.endpoints import app as flask_app
+
+# Create a Dash app instance using the Flask server
 import dash
 import dash_bootstrap_components as dbc
 from datetime import datetime
 
-# Initialize app-level variables
-LAST_UPDATE_TIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# Import the dashboard app module
+from dashboard.app import set_app
 
-def create_dash_app():
-    """Create and configure the Dash application"""
+def create_dash_app(server):
+    """Create and configure the Dash application with an existing Flask server"""
     app = dash.Dash(
         __name__, 
+        server=server,  # Use the existing Flask server
+        url_base_pathname='/dashboard/',  # Mount the dashboard at /dashboard/
         external_stylesheets=[
             dbc.themes.BOOTSTRAP,
             "https://use.fontawesome.com/releases/v5.15.4/css/all.css"
@@ -65,11 +80,29 @@ def create_dash_app():
     
     return app
 
-# This app instance will be replaced by the one from server.py
-# Keeping this for compatibility with existing modules
-app = None
+# Create the Dash app using the Flask server
+dash_app = create_dash_app(flask_app)
 
-# When this module is imported from server.py, update this variable
-def set_app(dash_app):
-    global app
-    app = dash_app 
+# Set the app instance in the dashboard module
+set_app(dash_app)
+
+# Configure the Dash app's layout
+from dashboard.layouts.main_layout import create_layout
+dash_app.layout = create_layout()
+
+# Import all Dash callback modules after setting layout
+from dashboard.callbacks import device_callbacks, system_metrics_callbacks, history_callbacks, page_callbacks, stock_callbacks
+
+# Add a redirection route for the root URL to the dashboard
+@flask_app.route('/')
+def index():
+    return flask_app.redirect('/dashboard/')
+
+if __name__ == '__main__':
+    # Load configuration
+    with open('config/config.json', 'r') as config_file:
+        config = json.load(config_file)
+    port = config.get('port', 5000)
+
+    logger.info(f"Starting integrated server on port {port}")
+    flask_app.run(debug=True, port=port, host='0.0.0.0') 
