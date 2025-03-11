@@ -92,7 +92,7 @@ def insert_stock_data(db_path, symbol, price):
     finally:
         session.close()
 
-def fetch_latest_system_metrics(db_path, metric_name=None, device_id=None):
+def fetch_latest_system_metrics(db_path=None, metric_name=None, device_id=None):
     """Fetch the latest system metrics from the database, optionally filtered by metric name and device."""
     session = get_session(db_path)
     try:
@@ -133,24 +133,17 @@ def fetch_latest_system_metrics(db_path, metric_name=None, device_id=None):
             subq.c.hostname
         ).all()
         
-        # Format results
-        metrics = []
+        # Format results as a dictionary
+        metrics = {}
         for result in results:
-            # Ensure timestamp is not None to prevent JavaScript format errors
-            timestamp_str = result[2].isoformat() if result[2] else ""
-            
-            metrics.append({
-                "metric_name": result[0],
-                "metric_value": result[1],
-                "timestamp": timestamp_str,
-                "device_id": result[3],
-                "device_hostname": result[4] or "Unknown Device"
-            })
+            metric_name = result[0]
+            metric_value = result[1]
+            metrics[metric_name] = metric_value
         
         return metrics
     except SQLAlchemyError as e:
         logging.error(f"Database error fetching latest system metrics: {e}")
-        return []
+        return {}
     finally:
         session.close()
 

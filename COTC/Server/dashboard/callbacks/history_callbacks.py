@@ -2,14 +2,35 @@ import dash
 from dash.dependencies import Input, Output, State
 from dash import html, dash_table
 import logging
-import requests
+import json
+import os
+from pathlib import Path
 from dashboard.app import app
-from dashboard.utils.config import API_BASE_URL, TABLE_STYLE
+from dashboard.utils.config import TABLE_STYLE
+from database.models import get_system_metrics_history
 from datetime import datetime
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
+# Get the absolute path to the project root directory
+PROJECT_ROOT = Path(__file__).parents[2].resolve()
+
+# Load configuration
+config_path = PROJECT_ROOT / 'config' / 'config.json'
+with open(config_path) as config_file:
+    config = json.load(config_file)
+
+# Update database path to be absolute
+if not os.path.isabs(config['database_path']):
+    DATABASE_PATH = str(PROJECT_ROOT / config['database_path'])
+else:
+    DATABASE_PATH = config['database_path']
 
 # Callback to update CPU history data
 @app.callback(
-    [Output('cpu-history-data-store', 'data')],
+    Output('cpu-history-data-store', 'data'),
     [Input('history-update-interval', 'n_intervals'),
      Input('device-store', 'data')],
     prevent_initial_call=False
@@ -17,36 +38,25 @@ from datetime import datetime
 def update_cpu_history_data(n_intervals, device_data):
     """Update the CPU history data store"""
     if not device_data or not device_data.get('device_id'):
-        return [[]]  # Return empty data if no device selected
+        logger.warning("No device selected for CPU history")
+        return []
     
     device_id = device_data.get('device_id')
+    logger.warning(f"Fetching CPU history for device {device_id}")
     
     try:
-        # Fetch CPU history data - use the general history endpoint
-        api_url = f'{API_BASE_URL}/metrics/system/history/cpu_usage?device_id={device_id}'
-        response = requests.get(api_url)
-        
-        if response.status_code == 200:
-            history_data = response.json()
-            
-            # Ensure we have a list
-            if not isinstance(history_data, list):
-                history_data = [history_data] if history_data else []
-                
-            # Filter to only include CPU usage metrics
-            filtered_data = [item for item in history_data if item.get('metric_name') == 'cpu_usage']
-            
-            # Return the filtered data wrapped in a list
-            return [[filtered_data]]
+        # Fetch CPU history data directly from database
+        history_data = get_system_metrics_history(db_path=DATABASE_PATH, metric_name='cpu_usage', device_id=device_id)
+        logger.warning(f"Retrieved {len(history_data)} CPU history records")
+        return history_data
             
     except Exception as e:
-        logging.error(f"Error fetching CPU history data: {e}")
-    
-    return [[]]
+        logger.error(f"Error fetching CPU history data: {e}")
+        return []
 
 # Callback to update RAM history data
 @app.callback(
-    [Output('ram-history-data-store', 'data')],
+    Output('ram-history-data-store', 'data'),
     [Input('history-update-interval', 'n_intervals'),
      Input('device-store', 'data')],
     prevent_initial_call=False
@@ -54,32 +64,21 @@ def update_cpu_history_data(n_intervals, device_data):
 def update_ram_history_data(n_intervals, device_data):
     """Update the RAM history data store"""
     if not device_data or not device_data.get('device_id'):
-        return [[]]  # Return empty data if no device selected
+        logger.warning("No device selected for RAM history")
+        return []
     
     device_id = device_data.get('device_id')
+    logger.warning(f"Fetching RAM history for device {device_id}")
     
     try:
-        # Fetch RAM history data - use the general history endpoint
-        api_url = f'{API_BASE_URL}/metrics/system/history/ram_usage?device_id={device_id}'
-        response = requests.get(api_url)
-        
-        if response.status_code == 200:
-            history_data = response.json()
-            
-            # Ensure we have a list
-            if not isinstance(history_data, list):
-                history_data = [history_data] if history_data else []
-                
-            # Filter to only include RAM usage metrics
-            filtered_data = [item for item in history_data if item.get('metric_name') == 'ram_usage']
-            
-            # Return the filtered data wrapped in a list
-            return [[filtered_data]]
+        # Fetch RAM history data directly from database
+        history_data = get_system_metrics_history(db_path=DATABASE_PATH, metric_name='ram_usage', device_id=device_id)
+        logger.warning(f"Retrieved {len(history_data)} RAM history records")
+        return history_data
             
     except Exception as e:
-        logging.error(f"Error fetching RAM history data: {e}")
-    
-    return [[]]
+        logger.error(f"Error fetching RAM history data: {e}")
+        return []
 
 # Callback to toggle CPU history table visibility
 @app.callback(
@@ -119,24 +118,15 @@ def toggle_cpu_history(n_clicks, history_data, current_style, device_data):
         ], className="text-center p-3")
         return {"display": "block"}, no_device_message, "Hide History"
     
-    # Ensure history_data is a list and unwrap it
-    if history_data and isinstance(history_data, list):
-        history_data = history_data[0]  # Unwrap the list
-    
-    # Ensure data is a list
-    if not isinstance(history_data, list):
-        history_data = [history_data] if history_data else []
-    
     # Create a DataTable with the history data
     if history_data:
-        # Format the data for the table - create a new list to avoid modifying the original
+        # Format the data for the table
         formatted_data = []
         for entry in history_data:
-            if isinstance(entry, dict):
-                formatted_data.append({
-                    'timestamp': entry.get('timestamp', ''),
-                    'metric_value': entry.get('metric_value', 0)
-                })
+            formatted_data.append({
+                'timestamp': entry.get('timestamp', ''),
+                'metric_value': entry.get('metric_value', 0)
+            })
         
         # Create the table
         table = dash_table.DataTable(
@@ -225,24 +215,15 @@ def toggle_ram_history(n_clicks, history_data, current_style, device_data):
         ], className="text-center p-3")
         return {"display": "block"}, no_device_message, "Hide History"
     
-    # Ensure history_data is a list and unwrap it
-    if history_data and isinstance(history_data, list):
-        history_data = history_data[0]  # Unwrap the list
-    
-    # Ensure data is a list
-    if not isinstance(history_data, list):
-        history_data = [history_data] if history_data else []
-    
     # Create a DataTable with the history data
     if history_data:
-        # Format the data for the table - create a new list to avoid modifying the original
+        # Format the data for the table
         formatted_data = []
         for entry in history_data:
-            if isinstance(entry, dict):
-                formatted_data.append({
-                    'timestamp': entry.get('timestamp', ''),
-                    'metric_value': entry.get('metric_value', 0)
-                })
+            formatted_data.append({
+                'timestamp': entry.get('timestamp', ''),
+                'metric_value': entry.get('metric_value', 0)
+            })
         
         # Create the table
         table = dash_table.DataTable(

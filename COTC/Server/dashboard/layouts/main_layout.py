@@ -23,6 +23,7 @@ def create_layout():
         dcc.Interval(id='clock-interval', interval=1000, n_intervals=0),  # Clock update every second
         dcc.Interval(id='device-update-interval', interval=60*1000, n_intervals=0),  # Update devices list every minute
         dcc.Interval(id='history-update-interval', interval=30*1000, n_intervals=0),  # Update history data every 30 seconds
+        dcc.Interval(id='polling-interval', interval=10*1000, n_intervals=0),  # Polling interval for stock symbols
         
         # Add a store for page reload
         dcc.Store(id='reload-trigger', data=0),
@@ -50,16 +51,11 @@ def create_layout():
                         dbc.CardBody([
                             dcc.Graph(
                                 id='cpu-gauge',
+                                className="gauge-chart",
                                 config={'displayModeBar': False}
                             ),
                         ]),
-                        # CPU History section (initially hidden)
-                        html.Div(
-                            id='cpu-history-container',
-                            style={"display": "none"},
-                            className="mt-3 border-top pt-3"
-                        ),
-                    ], style=CARD_STYLE)
+                    ], style=CARD_STYLE),
                 ], md=6),
                 
                 # RAM Usage Card
@@ -78,17 +74,34 @@ def create_layout():
                         dbc.CardBody([
                             dcc.Graph(
                                 id='ram-gauge',
+                                className="gauge-chart",
                                 config={'displayModeBar': False}
                             ),
                         ]),
-                        # RAM History section (initially hidden)
-                        html.Div(
-                            id='ram-history-container',
-                            style={"display": "none"},
-                            className="mt-3 border-top pt-3"
-                        ),
-                    ], style=CARD_STYLE)
+                    ], style=CARD_STYLE),
                 ], md=6),
+            ]),
+            
+            # CPU History Container (initially hidden)
+            dbc.Row([
+                dbc.Col([
+                    html.Div(
+                        id='cpu-history-container',
+                        className="mt-3",
+                        style={'display': 'none'}
+                    ),
+                ]),
+            ]),
+            
+            # RAM History Container (initially hidden)
+            dbc.Row([
+                dbc.Col([
+                    html.Div(
+                        id='ram-history-container',
+                        className="mt-3",
+                        style={'display': 'none'}
+                    ),
+                ]),
             ]),
             
             # Stock Data Section
@@ -96,7 +109,13 @@ def create_layout():
                 dbc.Col([
                     dbc.Card([
                         dbc.CardHeader([
-                            html.H5("Stock Data Tracker", className="card-title mb-0"),
+                            html.H5("Stock Tracking", className="card-title mb-0"),
+                            html.Div([
+                                html.Div(
+                                    id="polling-status", 
+                                    className="text-muted small"
+                                )
+                            ], className="float-end")
                         ]),
                         dbc.CardBody([
                             # Add Symbol Form
@@ -141,9 +160,16 @@ def create_layout():
                                 className="stock-price-display text-center my-4"
                             ),
                             
+                            # Stock Price Chart
+                            dcc.Graph(
+                                id='stock-price-chart',
+                                config={'displayModeBar': True},
+                                className="mb-4",
+                                figure={}
+                            ),
+                            
                             # Stock Price History
                             html.Div([
-                                html.H6("Price History", className="mb-3"),
                                 html.Div(
                                     id='stock-price-history',
                                     className="stock-history-container"

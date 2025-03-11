@@ -3,14 +3,30 @@ from dash.dependencies import Input, Output, State, ClientsideFunction
 from dash import html, dcc
 import logging
 import datetime
-import requests
+import json
+import os
+from pathlib import Path
 from dashboard.app import app, LAST_UPDATE_TIME
-from dashboard.utils.config import API_BASE_URL
-import time
+from database.models import get_session
+from database.schema import Device
 
 # Set up logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)  # Change from INFO to WARNING
+
+# Get the absolute path to the project root directory
+PROJECT_ROOT = Path(__file__).parents[2].resolve()
+
+# Load configuration
+config_path = PROJECT_ROOT / 'config' / 'config.json'
+with open(config_path) as config_file:
+    config = json.load(config_file)
+
+# Update database path to be absolute
+if not os.path.isabs(config['database_path']):
+    DATABASE_PATH = str(PROJECT_ROOT / config['database_path'])
+else:
+    DATABASE_PATH = config['database_path']
 
 # Callback to update UI refresh animation
 @app.callback(
@@ -35,24 +51,23 @@ def update_refresh_ui(n_clicks, current_class):
     # Default (non-spinning)
     return "fas fa-sync-alt", False
 
-# Callback to check API connectivity
+# Callback to check database connectivity
 @app.callback(
     Output('interval-component', 'disabled'),
     Input('device-update-interval', 'n_intervals')
 )
-def check_api_connectivity(n_intervals):
-    """Check if the API is reachable and log the result"""
-    logger.info(f"Checking API connectivity to {API_BASE_URL}")
+def check_database_connectivity(n_intervals):
+    """Check if the database is accessible"""
+    logger.info("Checking database connectivity")
     try:
-        response = requests.get(f"{API_BASE_URL}/devices")
-        if response.status_code == 200:
-            logger.info("API connection successful")
-            return False  # Enable the interval
-        else:
-            logger.error(f"API connection failed with status {response.status_code}")
-            return True  # Disable the interval
+        session = get_session(DATABASE_PATH)
+        # Try a simple query
+        session.query(Device).first()
+        session.close()
+        logger.info("Database connection successful")
+        return False  # Enable the interval
     except Exception as e:
-        logger.error(f"API connection error: {e}")
+        logger.error(f"Database connection error: {e}")
         return True  # Disable the interval
 
 # Client-side JavaScript function for page refresh

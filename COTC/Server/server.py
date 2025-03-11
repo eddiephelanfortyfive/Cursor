@@ -25,11 +25,11 @@ flask_app = Flask(__name__)
 
 # Import and register routes from endpoints
 from api.endpoints import register_routes
-flask_app = register_routes(flask_app, config)
+register_routes(flask_app, config)  # Don't reassign flask_app
 
 # Create and set up the Dash app
 from dashboard.app import create_dash_app, set_app
-dash_app = create_dash_app(flask_app)
+dash_app = create_dash_app(server=flask_app)  # Explicitly name the parameter
 set_app(dash_app)
 
 # Configure the Dash app's layout

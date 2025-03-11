@@ -1,14 +1,16 @@
 import dash
-from dash import Input, Output,  State
+from dash import Input, Output, State
 from dashboard.utils.config import COLORS
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-import requests
 import json
 from datetime import datetime
 import os
 import logging
 import random
+from pathlib import Path
+from database.models import get_session
+from database.schema import Device
 
 # Import app instance instead of creating a new one
 from dashboard.app import app
@@ -16,24 +18,19 @@ from dashboard.app import app
 # Set up logging - change to WARNING level to reduce terminal output
 logging.basicConfig(level=logging.WARNING)
 
-# Get the current directory to locate config.json
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-config_path = os.path.join(parent_dir, 'config', 'config.json')
+# Get the absolute path to the project root directory
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
-with open(config_path, 'r') as config_file:
+# Load configuration
+config_path = PROJECT_ROOT / 'config' / 'config.json'
+with open(config_path) as config_file:
     config = json.load(config_file)
 
-# Don't create a new app instance, use the imported one
-# app = dash.Dash(
-#     __name__, 
-#     external_stylesheets=[
-#         dbc.themes.BOOTSTRAP,
-#         "https://use.fontawesome.com/releases/v5.15.4/css/all.css"
-#     ],
-#     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
-#     prevent_initial_callbacks='initial_duplicate'  # Enable duplicate callbacks with initial call
-# )
+# Update database path to be absolute
+if not os.path.isabs(config['database_path']):
+    DATABASE_PATH = str(PROJECT_ROOT / config['database_path'])
+else:
+    DATABASE_PATH = config['database_path']
 
 # Initialize last update timestamp
 LAST_UPDATE_TIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -198,41 +195,39 @@ def animate_refresh_button(n_clicks, cpu_fig, ram_fig, animation_state):
      Input('refresh-button', 'n_clicks')]
 )
 def update_device_list(n_intervals, n_clicks):
-    # Fetch all registered devices from the API
+    # Fetch all registered devices directly from the database
     try:
-        response = requests.get('http://127.0.0.1:5000/devices')
-        if response.status_code == 200:
-            devices = response.json()
+        session = get_session(DATABASE_PATH)
+        devices = session.query(Device).all()
+        
+        # Create dropdown options
+        options = []
+        for device in devices:
+            # Create a more detailed and formatted label
+            hostname = device.hostname or 'Unknown'
+            os_info = device.os_info or ''
+            device_id = device.device_id[:8]  # First 8 chars of UUID
             
-            # Create dropdown options
-            options = []
-            for device in devices:
-                # Create a more detailed and formatted label
-                hostname = device.get('hostname', 'Unknown')
-                os_info = device.get('os_info', '')
-                device_id = device.get('device_id', '')[:8]  # First 8 chars of UUID
-                
-                # Format the label with more details
-                if os_info:
-                    label = f"{hostname} - {os_info} (ID: {device_id})"
-                else:
-                    label = f"{hostname} (ID: {device_id})"
-                
-                options.append({
-                    'label': label,
-                    'value': device['device_id']
-                })
+            # Format the label with more details
+            if os_info:
+                label = f"{hostname} - {os_info} (ID: {device_id})"
+            else:
+                label = f"{hostname} (ID: {device_id})"
             
-            # Add a "None" option with a string value instead of null
-            options.insert(0, {'label': 'No Device Selected', 'value': 'none'})
-            
-            return options
-        else:
-            # Return at least the "None" option if API call fails
-            return [{'label': 'No Device Selected', 'value': 'none'}]
+            options.append({
+                'label': label,
+                'value': device.device_id
+            })
+        
+        # Add a "None" option with a string value instead of null
+        options.insert(0, {'label': 'No Device Selected', 'value': 'none'})
+        
+        return options
     except Exception as e:
         logging.error(f"Error fetching devices: {e}")
         return [{'label': 'No Device Selected', 'value': 'none'}]
+    finally:
+        session.close()
 
 # Callback to handle device selection and update the device store
 @app.callback(
@@ -244,19 +239,17 @@ def update_selected_device(selected_device_id):
         # No device selected or explicitly selected "none"
         return [{'device_id': None, 'hostname': 'No Device Selected'}]
     
-    # Fetch the selected device details to get the hostname
+    # Fetch the selected device details directly from the database
     try:
-        response = requests.get('http://127.0.0.1:5000/devices')
-        if response.status_code == 200:
-            devices = response.json()
-            
-            # Find the selected device
-            selected_device = next((d for d in devices if d['device_id'] == selected_device_id), None)
-            
-            if selected_device:
-                return [{'device_id': selected_device_id, 'hostname': selected_device['hostname']}]
+        session = get_session(DATABASE_PATH)
+        device = session.query(Device).filter_by(device_id=selected_device_id).first()
+        
+        if device:
+            return [{'device_id': selected_device_id, 'hostname': device.hostname}]
     except Exception as e:
         logging.error(f"Error fetching device details: {e}")
+    finally:
+        session.close()
     
     # Default fallback if anything goes wrong
     return [{'device_id': selected_device_id, 'hostname': 'Selected Device'}]

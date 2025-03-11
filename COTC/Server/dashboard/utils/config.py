@@ -4,13 +4,13 @@ import logging
 from pathlib import Path
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# Constants for API connection
 API_HOST = "127.0.0.1"
 API_PORT = int(os.environ.get('API_PORT', 5000))
 API_BASE_URL = "http://127.0.0.1:5000"
+
 
 def load_config():
     """Load configuration from config.json"""
@@ -60,8 +60,27 @@ BUTTON_STYLE = {
     'border-radius': '4px',
 }
 
+# Updated TABLE_STYLE with all necessary properties
 TABLE_STYLE = {
-    'overflowX': 'auto',
-    'border': '1px solid #e0e0e0',
-    'borderRadius': '5px'
+    'table': {
+        'overflowX': 'auto',
+        'border': '1px solid #e0e0e0',
+        'borderRadius': '5px'
+    },
+    'cell': {
+        'textAlign': 'left',
+        'padding': '8px',
+        'fontFamily': 'Arial, sans-serif'
+    },
+    'header': {
+        'fontWeight': 'bold',
+        'backgroundColor': '#f8f9fa',
+        'borderBottom': '1px solid #dee2e6'
+    },
+    'data': {
+        'backgroundColor': COLORS['white']
+    },
+    'conditional': [
+        {'if': {'row_index': 'odd'}, 'backgroundColor': '#f9f9f9'}
+    ]
 } 

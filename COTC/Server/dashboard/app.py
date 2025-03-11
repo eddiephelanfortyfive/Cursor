@@ -1,23 +1,33 @@
 import dash
 import dash_bootstrap_components as dbc
 from datetime import datetime
+from flask import Flask
 
 # Initialize app-level variables
 LAST_UPDATE_TIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def create_dash_app(server=None):
     """Create and configure the Dash application"""
+    # Ensure server is properly initialized
+    if server is not None and not isinstance(server, Flask):
+        raise ValueError("server must be a Flask app instance")
+    
+    # Create the Dash app
     app = dash.Dash(
-        __name__, 
-        server=server,  # Use the provided Flask server if available
-        url_base_pathname='/dashboard/' if server else '/',
+        __name__,
+        server=server,
+        routes_pathname_prefix='/dashboard/' if server else '/',
         external_stylesheets=[
             dbc.themes.BOOTSTRAP,
             "https://use.fontawesome.com/releases/v5.15.4/css/all.css"
         ],
         meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
-        prevent_initial_callbacks='initial_duplicate'  # Enable duplicate callbacks with initial call
+        prevent_initial_callbacks='initial_duplicate'  # Allow duplicate callbacks with initial call
     )
+    
+    # Configure app settings
+    app.config.suppress_callback_exceptions = True
+    app.config.prevent_initial_callbacks = 'initial_duplicate'
     
     # Add custom CSS for dropdown menus
     app.index_string = '''
@@ -61,9 +71,6 @@ def create_dash_app(server=None):
         </body>
     </html>
     '''
-    
-    # Make sure exceptions are propagated to our debugging tools
-    app.config.suppress_callback_exceptions = True
     
     return app
 
